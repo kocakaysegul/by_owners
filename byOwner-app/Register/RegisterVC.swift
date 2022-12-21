@@ -7,6 +7,7 @@
 //
 
 import UIKit
+import ProgressHUD
 
 class RegisterVC: UIViewController {
 
@@ -29,6 +30,7 @@ class RegisterVC: UIViewController {
 
     
     @IBAction func requestBtnPressed(_ sender: Any) {
+ 
         
     }
     @IBAction func registerBtnPressed(_ sender: Any) { // Email register button
@@ -39,6 +41,16 @@ class RegisterVC: UIViewController {
                     return
                 }
                 self.goToApp()
+            })
+        } else if emailTF.text != "" && passwordTF.text != "" {
+            
+            FUser.loginUserWith(email: emailTF.text!, password: passwordTF.text!, withBlock: { (error) in
+                if error != nil {
+                    ProgressHUD.showError(error?.localizedDescription)
+                    print(error?.localizedDescription)
+                } else {
+                    self.goToApp()
+                }
             })
         }
     }

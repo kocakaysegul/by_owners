@@ -8,6 +8,7 @@
 
 import UIKit
 import MapKit
+import IDMPhotoBrowser
 
 class PropertyVC: UIViewController {
 
@@ -42,6 +43,8 @@ class PropertyVC: UIViewController {
     
     var property: Property!
     var propertyCoordinate: CLLocationCoordinate2D?
+    var tapGesture: UIGestureRecognizer!
+    
     
     var imageArray: [UIImage] = []
     
@@ -50,6 +53,9 @@ class PropertyVC: UIViewController {
         
         getPropertyImages()
         setupUI()
+        
+        tapGesture = UITapGestureRecognizer(target: self, action: #selector(imageTapped))
+        imageScrollView.addGestureRecognizer(tapGesture)
 
         // Do any additional setup after loading the view.
         mainScrollView.contentSize = CGSize(width: view.frame.width, height: 955)
@@ -67,6 +73,16 @@ class PropertyVC: UIViewController {
     
     
     //MARK: Helpers
+    
+    @objc func imageTapped() {
+        
+        let photos = IDMPhoto.photos(withImages: imageArray)
+        let browser = IDMPhotoBrowser(photos: photos)!
+        browser.setInitialPageIndex(0)
+        
+        self.present(browser, animated: true, completion: nil)
+    }
+    
     func getPropertyImages() {
         if property.imageLinks != "" && property.imageLinks != nil {
             downloadImages(urls: property.imageLinks!, withBlock:  { (images) in

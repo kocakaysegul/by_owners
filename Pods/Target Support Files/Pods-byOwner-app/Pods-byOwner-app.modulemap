@@ -1,0 +1,6 @@
+framework module Pods_byOwner_app {
+  umbrella header "Pods-byOwner-app-umbrella.h"
+
+  export *
+  module * { export * }
+}

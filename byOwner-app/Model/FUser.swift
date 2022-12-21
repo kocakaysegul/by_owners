@@ -173,7 +173,92 @@ class FUser {
         }
     }
     
+
+
+//MARK: Log In
+
+class func loginUserWith(email: String, password: String, withBlock: @escaping (_ error: Error?)->Void) {
+    
+    Auth.auth().signIn(withEmail: email, password: password) { (firUser, error) in
+        
+        if error != nil {
+            withBlock(error)
+        } else {
+            
+            fetchUserWith(userId: firUser!.uid, completion: { (fUser) in
+                
+                saveUserLocally(fUser: fUser!)
+                
+            })
+        }
+        
+    }
 }
+
+//MARK: IAP functions
+
+//func purchse(productId: String) {
+//
+//    switch productId {
+//    case IAPProduct.coins.rawValue:
+//
+//        print("User has purchased coins, saving")
+//        let newCoins = FUser.currentUser()!.coins + 10
+//
+//        updateCurrentUser(withValues: [kCOINS : newCoins], withBlock: { (success) in
+//        })
+//    case IAPProduct.agentSubscription.rawValue:
+//        print("User has purchased membership, saving")
+//        updateCurrentUser(withValues: [kISAGENT : true], withBlock: { (success) in
+//        })
+//
+//    default:
+//        print("Not sure what user was purchasing")
+//    }
+//
+//}
+
+
+
+//MARK: LogOut
+
+class func logOutCurrentUser(withBlock: @escaping (_ sucess: Bool)->Void) {
+    
+   // UserDefaults.standard.removeObject(forKey: "OneSignalId")
+   // removeOneSignalId()
+    
+    UserDefaults.standard.removeObject(forKey: kCURRENTUSER)
+    UserDefaults.standard.synchronize()
+    
+    do {
+        try Auth.auth().signOut()
+        withBlock(true)
+        
+    } catch let error as NSError {
+        print("Error loging out \(error.localizedDescription)")
+        withBlock(false)
+    }
+    
+}
+
+class func deleteUser(completion: @escaping (_ error: Error?)->Void) {
+    
+    let user = Auth.auth().currentUser
+    
+    user?.delete(completion: { (error) in
+        
+        completion(error)
+    })
+}
+
+
+
+} //end of class
+
+
+
+
+
 
 //MARK: Saving User
 
@@ -214,5 +299,46 @@ func userDictionaryFrom(user: FUser) -> NSDictionary { // We can use this functi
     
     // So these are all the values of our user that we want to save.
     return NSDictionary(objects: [user.objectId, createdAt, updatedAt, user.company, user.pushId!, user.firstName, user.lastName, user.fullName, user.avatar, user.phoneNumber, user.additionalPhoneNumber, user.isAgent, user.coins, user.favoritProperties], forKeys: [kOBJECTID as NSCopying, kCREATEDAT as NSCopying, kUPDATEDAT as NSCopying, kCOMPANY as NSCopying, kPUSHID as NSCopying, kFIRSTNAME as NSCopying, kLASTNAME as NSCopying, kFULLNAME as NSCopying, kAVATAR as NSCopying, kPHONE as NSCopying, kADDPHONE as NSCopying, kISAGENT as NSCopying, kCOINS as NSCopying, kFAVORIT as NSCopying])
+    
+}
+
+
+func updateCurrentUser(withValues: [String : Any], withBlock: @escaping (_ seccess: Bool)->Void) {
+    
+    if UserDefaults.standard.object(forKey: kCURRENTUSER) != nil {
+        
+        let curruntUser = FUser.currentUser()!
+        
+        let userObject = userDictionaryFrom(user: curruntUser).mutableCopy() as! NSMutableDictionary
+        
+        userObject.setValuesForKeys(withValues)
+        
+        let ref = firebase.child(kUSER).child(curruntUser.objectId)
+        
+        ref.updateChildValues(withValues, withCompletionBlock: { (error, ref) in
+            
+            if error != nil {
+                withBlock(false)
+                return
+            }
+            
+            UserDefaults.standard.setValue(userObject, forKey: kCURRENTUSER)
+            UserDefaults.standard.synchronize()
+            
+            withBlock(true)
+            
+        })
+    }
+}
+
+func isUserLoggedIn(viewController: UIViewController) -> Bool {
+    
+    if FUser.currentUser() != nil {
+        return true
+    } else {
+        let vc = UIStoryboard(name: "Main", bundle: nil).instantiateViewController(withIdentifier: "RegisterView") as! RegisterVC
+        viewController.present(vc, animated: true, completion: nil)
+        return false
+    }
     
 }

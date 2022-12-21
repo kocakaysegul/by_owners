@@ -10,8 +10,21 @@ import UIKit
 import ProgressHUD
 import ImagePicker
 
-class AddPropertyVC: UIViewController, UITextFieldDelegate, UIPickerViewDelegate, UIPickerViewDataSource, MapViewDelegate, CLLocationManagerDelegate, ImagePickerDelegate {
+class AddPropertyVC: UIViewController, UITextFieldDelegate, UIPickerViewDelegate, UIPickerViewDataSource, MapViewDelegate, CLLocationManagerDelegate, ImagePickerDelegate, ImageGalleryViewControllerDelegate {
+    
+        //MARK: ImageGalleryDelegate
+    func didFinishEditingImages(allImages: [UIImage]) {
+        self.propertyImages = allImages
+    }
+    
 
+    
+    
+    @IBOutlet weak var cameraButtonOutlet: UIButton!
+    @IBOutlet weak var vcTitleLabel: UILabel!
+    
+    @IBOutlet weak var backButtonOutlet: UIButton!
+    
     var yearArray: [Int] = []
     
     var datePicker = UIDatePicker()
@@ -56,7 +69,7 @@ class AddPropertyVC: UIViewController, UITextFieldDelegate, UIPickerViewDelegate
     @IBOutlet weak var furnishedSwitch: UISwitch!
     
     var user: FUser?
-    var property: Property?
+    var property: Property? // for edit property :)
     
     var titleDeedsSwitchValue = false
     var centralHeatingSwitchValue = false
@@ -69,7 +82,9 @@ class AddPropertyVC: UIViewController, UITextFieldDelegate, UIPickerViewDelegate
     
     //
     override func viewWillAppear(_ animated: Bool) {
-        
+        if !isUserLoggedIn(viewController: self) {
+            return
+        }
       
     }
     
@@ -105,22 +120,56 @@ class AddPropertyVC: UIViewController, UITextFieldDelegate, UIPickerViewDelegate
 
         
         scrollView.contentSize = CGSize(width: self.view.bounds.width, height: topView.frame.size.height)
+        
+        if property != nil {
+            //edit property
+            setUIForEdit()
+        }
+       
+        
     }
 
     
     
     //MARK: IBActions
     
+    
+    @IBAction func backButtonPressed(_ sender: Any) {
+        self.dismiss(animated: true, completion: nil)
+        
+    }
+    
     @IBAction func saveButtonPressed(_ sender: Any) {
         user = FUser.currentUser()
         if !user!.isAgent {
             //check if user can post
-            save()
+            canUserPostProperty(completion: { (canPost) in
+                
+                if canPost {
+                    self.save()
+                } else {
+                    self.save()
+                    ProgressHUD.showError("You have reached your post limit!")
+                }
+            })
         } else {
             save()
         }
     }
     @IBAction func cameraButtonPressed(_ sender: Any) {
+        
+        
+        if property != nil {
+            //editing
+            let vc = UIStoryboard(name: "Main", bundle: nil).instantiateViewController(withIdentifier: "imageGallery") as! ImageGalleryVC
+            
+            vc.property = property
+            vc.delegate = self as! ImageGalleryViewControllerDelegate
+            present(vc, animated: true, completion: nil)
+            return
+        }
+        
+
         
         let imagePickerController = ImagePickerController()
         imagePickerController.delegate = self
@@ -159,8 +208,12 @@ class AddPropertyVC: UIViewController, UITextFieldDelegate, UIPickerViewDelegate
         if titleTextField.text != "" && referenceCodeTextField.text != "" && advertisementTypeTextField.text != "" && propertyTypeTextField.text != "" && priceTextField.text != "" {
             
             // Create new property
-            let newProperty = Property()
+            var newProperty = Property()
            
+            if property != nil {
+                //editing property
+                newProperty = property!
+            }
             
             ProgressHUD.show("Saving...")
             
@@ -479,8 +532,64 @@ class AddPropertyVC: UIViewController, UITextFieldDelegate, UIPickerViewDelegate
         print("coordinates = \(coordinate)")
     }
 
+    //MARK: EditProperty
     
+    func setUIForEdit() {
+        
+        self.vcTitleLabel.text = "Edit Property"
+        self.cameraButtonOutlet.setImage(UIImage(named: "Picture"), for: .normal)
+        self.backButtonOutlet.isHidden = false
+        
+        referenceCodeTextField.text = property!.referenceCode
+        titleTextField.text = property!.title
+        advertisementTypeTextField.text = property!.advertismentType
+        priceTextField.text = "\(property!.price)"
+        propertyTypeTextField.text = property!.propertyType
+        
+        balconySizeTextField.text = "\(property!.balconySize)"
+        bathroomsTextField.text = "\(property!.numberOfBathrooms)"
+        buildYearTextField.text = property!.buildYear
+        parkingTextField.text = "\(property!.parking)"
+        roomsTextField.text = "\(property!.numberOfRooms)"
+        propertySizeTextField.text = "\(property!.size)"
+        addressTextField.text = property!.address
+        avaliableFromTextField.text = property!.availableFrom
+        floorTextField.text = "\(property!.floor)"
+        descriptionTextView.text = property!.propertyDescription
+        cityTextField.text = property!.city
+        countryTextField.text = property!.country
+        
+        
+        titleDeedsSwitchValue = property!.titleDeeds
+        centralHeatingSwitchValue = property!.centralHeating
+        solarWaterHeatingSwitchValue = property!.solarWaterHeating
+        storeRoomSwitchValue = property!.storeRoom
+        airConditionerSwitchValue = property!.airConditioner
+        furnishedSwitchValue = property!.isFurnished
+        
+        if property!.latitude != 0.0 && property!.longitude != 0.0 {
+            
+            locationCoordinates?.latitude = property!.latitude
+            locationCoordinates?.longitude = property!.longitude
+        }
+        
+        updateSwitches()
+        
+    }
     
+    func updateSwitches() {
+        
+        titleDeedsSwitch.isOn = titleDeedsSwitchValue
+        centralHeatingSwitch.isOn = centralHeatingSwitchValue
+        solarWaterHeatingSwitch.isOn = solarWaterHeatingSwitchValue
+        storeRoomSwitch.isOn = storeRoomSwitchValue
+        airConditionerSwitch.isOn = airConditionerSwitchValue
+        furnishedSwitch.isOn = furnishedSwitchValue
+    }
+    
+
+    
+
     
     
 }

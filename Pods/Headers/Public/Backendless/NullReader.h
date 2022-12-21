@@ -1,0 +1,1 @@
+../../../Backendless/SDK/ios/backendless/include/NullReader.h

@@ -86,7 +86,7 @@ class PropertyCollectionViewCell: UICollectionViewCell {
     
     
     @IBAction func menuButtonPressed(_ sender: Any) {
-        
+        delegate!.didClickMenuButton!(property: property)
     }
     
     @IBAction func starButtonPressed(_ sender: Any) {

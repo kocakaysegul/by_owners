@@ -21,7 +21,7 @@ let advertismentTypes = ["Select", "Sale", "Rent", "Exchange"]
 
 //IDS and Keys
 public let kONESIGNALAPPID = "d3d5e279-c1c8-40fe-a544-722195b81c41"
-public let kFILEREFERENCE = "gs://myapp-1f8b0.appspot.com"
+public let kFILEREFERENCE = "gs://byowner-app.appspot.com"
 
 
 //FUser
